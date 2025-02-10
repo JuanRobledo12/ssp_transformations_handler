@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+src/ssp_transformations_handler/GeneralUtils.py
+src/ssp_transformations_handler/TransformationUtils.py
+src/ssp_transformations_handler/__init__.py
+src/ssp_transformations_handler.egg-info/PKG-INFO
+src/ssp_transformations_handler.egg-info/SOURCES.txt
+src/ssp_transformations_handler.egg-info/dependency_links.txt
+src/ssp_transformations_handler.egg-info/requires.txt
+src/ssp_transformations_handler.egg-info/top_level.txt
