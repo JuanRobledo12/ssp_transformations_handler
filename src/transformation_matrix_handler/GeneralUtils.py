@@ -2,56 +2,33 @@ import yaml
 
 class GeneralUtils:
     """
-    A utility class that provides general helper functions.
-    Methods
-    -------
-    __init__():
-        Initializes the GeneralUtils class.
-    get_yaml_values(file_path):
-        Reads a YAML file and retrieves specific values.
-        Parameters:
-        file_path (str): The path to the YAML file.
-        Returns:
-        dict: A dictionary containing the retrieved values.
-        None: If the file is not found or there is an error parsing the YAML file.
-    compare_dfs(df1, df2):
-        Compares the columns of two DataFrames and prints the differences.
-        Parameters:
-        df1 (pandas.DataFrame): The first DataFrame.
-        df2 (pandas.DataFrame): The second DataFrame.
-    add_missing_cols(df1, df2):
-        Adds missing columns from df1 to df2.
-        Parameters:
-        df1 (pandas.DataFrame): The first DataFrame.
-        df2 (pandas.DataFrame): The second DataFrame.
-        Returns:
-        pandas.DataFrame: The second DataFrame with the missing columns added.
+    A utility class for general operations including reading YAML files and manipulating pandas DataFrames.
+    Methods:
+        get_yaml_values(file_path):
+        compare_dfs(df_example, df_input):
+        add_missing_cols(df_example, df_input):
+        remove_additional_cols(df_example, df_input):
+
     """
-
-
-    def __init__(self):
+   
+    @staticmethod
+    def get_yaml_values(file_path):
         """
-        Initializes the instance of the class. Currently, this constructor does not perform any operations.
-        """
-        pass
-
-
-    def get_yaml_values(sefl, file_path):
-        """
-        Reads a YAML file from the given file path and retrieves specific values.
+        Reads a YAML file and retrieves specific values.
         Args:
             file_path (str): The path to the YAML file.
         Returns:
-            dict: A dictionary containing the retrieved values with keys:
+            dict: A dictionary containing the retrieved values:
                 - "country_name" (str): The name of the country.
                 - "ssp_input_file_name" (str): The name of the SSP input file.
-                - "ssp_transformation_cw" (str): The SSP transformation CW value.
+                - "ssp_transformation_cw" (str): The SSP transformation CW.
+                - "energy_model_flag" (str): The energy model flag.
             None: If the file is not found or there is an error parsing the YAML file.
         Raises:
-            FileNotFoundError: If the file is not found at the given file path.
+            FileNotFoundError: If the file is not found at the specified path.
             yaml.YAMLError: If there is an error parsing the YAML file.
         """
-
+        
         try:
             # Open and load the YAML file
             with open(file_path, 'r') as file:
@@ -84,23 +61,18 @@ class GeneralUtils:
             print(f"Error parsing YAML file: {e}")
             return None
 
-    # Example usage
-    if __name__ == "__main__":
-        yaml_file_path = "path_to_your_file.yaml"  # Replace with the actual file path
-        result = get_yaml_values(yaml_file_path)
-
-        
-    def compare_dfs(self, df_example, df_input):
+    @staticmethod   
+    def compare_dfs(df_example, df_input):
         """
-        Compares the columns of two pandas DataFrames and prints the differences.
+        Compare the columns of two pandas DataFrames and print the differences.
+
         Parameters:
-        df_example (pandas.DataFrame): The SSP example DataFrame to compare.
-        df_input (pandas.DataFrame): Your input df DataFrame to compare.
-        Returns:
-        None
+        df_example (pandas.DataFrame): The first DataFrame to compare.
+        df_input (pandas.DataFrame): The second DataFrame to compare.
+
         Prints:
-        - Columns present in df_example but not in df_input.
-        - Columns present in df_input but not in df_example.
+        Columns in df_example but not in df_input.
+        Columns in df_input but not in df_example.
         """
 
         # Assuming your DataFrames are df_example and df_input
@@ -116,7 +88,20 @@ class GeneralUtils:
         print("Columns in df_example but not in df_input:", diff_in_df_example)
         print("Columns in df_input but not in df_example:", diff_in_df_input)
 
-    def add_missing_cols(self, df_example, df_input):
+    @staticmethod
+    def add_missing_cols(df_example, df_input):
+        """
+        Add missing columns from df_example to df_input.
+        This function identifies columns that are present in df_example but 
+        missing in df_input, and adds those columns to df_input with their 
+        corresponding values from df_example.
+        Parameters:
+        df_example (pd.DataFrame): The DataFrame containing the example structure 
+                                   with all required columns.
+        df_input (pd.DataFrame): The DataFrame to which missing columns will be added.
+        Returns:
+        pd.DataFrame: The updated df_input DataFrame with missing columns added.
+        """
         
         # Identify columns in df_example but not in df_input
         columns_to_add = [col for col in df_example.columns if col not in df_input.columns]
@@ -132,7 +117,16 @@ class GeneralUtils:
         
         return df_input
     
-    def remove_additional_cols(self, df_example, df_input):
+    @staticmethod
+    def remove_additional_cols(df_example, df_input):
+        """
+        Remove columns from df_input that are not present in df_example.
+        Parameters:
+        df_example (pandas.DataFrame): The reference DataFrame containing the desired columns.
+        df_input (pandas.DataFrame): The DataFrame from which additional columns will be removed.
+        Returns:
+        pandas.DataFrame: A DataFrame with only the columns present in df_example.
+        """
         
         # Identify columns in df_input but not in df_example
         columns_to_remove = [col for col in df_input.columns if col not in df_example.columns]
