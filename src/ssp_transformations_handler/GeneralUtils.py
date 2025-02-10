@@ -1,4 +1,6 @@
 import yaml
+import pandas as pd
+import os
 
 class GeneralUtils:
     """
@@ -8,7 +10,7 @@ class GeneralUtils:
         compare_dfs(df_example, df_input):
         add_missing_cols(df_example, df_input):
         remove_additional_cols(df_example, df_input):
-
+        normalize_energy_frac_vars(df_to_norm, frac_vars_mapping_file_path):
     """
    
     @staticmethod
@@ -140,4 +142,60 @@ class GeneralUtils:
         df_input = df_input.drop(columns=columns_to_remove)
         
         return df_input
+    
+
+    @staticmethod
+    def normalize_energy_frac_vars(df_to_norm, frac_vars_mapping_file_path):
+        """
+        Normalize energy fraction variables in a DataFrame.
+        This function normalizes columns in the input DataFrame that correspond to energy fraction variables.
+        The normalization is done by dividing each value in a subgroup of columns by the sum of the values in that subgroup for each row.
+        The function also checks if the row sums for each subgroup are within the range [0, 1].
+        Parameters:
+        df_to_norm (pd.DataFrame): The DataFrame containing the data to be normalized.
+        frac_vars_mapping_file_path (str): The file path to an Excel file that contains the mapping of energy fraction variables.
+                                        The Excel file should have a column named 'prefix' which indicates the subgroup prefix for each variable.
+        Returns:
+        pd.DataFrame: A new DataFrame with the normalized energy fraction variables.
+        """
+       
+        def test_sum(row_sums, subgroup_prefix):
+            # get the sum of the row_sums
+            row_sums_test = row_sums.sum() / len(row_sums)
+
+            if row_sums_test < 0 or row_sums_test > 1:
+                print(f"Row sums for {subgroup_prefix} are not in range, the sum is {row_sums_test}. Please check the data.")
+
+            return None
+            
+        # Copy input df
+        df = df_to_norm.copy()
+
+        # Read energy frac vars
+        df_frac_vars = pd.read_excel(frac_vars_mapping_file_path)
+        
+        # Get subgroup prefix list
+        prefix_list = df_frac_vars['prefix'].unique()
+
+        # Normalize subgroup cols
+        for subgroup_prefix in prefix_list:
+            # Get all columns belonging to the current subgroup
+            subgroup_cols = [i for i in df.columns if subgroup_prefix in i]
+
+            # Calculate the row-wise sum of the subgroup columns
+            row_sums = df[subgroup_cols].sum(axis=1)
+
+            # Check if the row sums are equal to 1
+            test_sum(row_sums, subgroup_prefix)
+
+            # Avoid division by zero; replace 0 sums with NaN
+            row_sums = row_sums.replace(0, pd.NA)
+
+            # Normalize each column in the subgroup by dividing by the row-wise sum
+            df[subgroup_cols] = df[subgroup_cols].div(row_sums, axis=0)
+
+        # Fill NaNs with 0
+        df = df.fillna(0)
+
+        return df
 
