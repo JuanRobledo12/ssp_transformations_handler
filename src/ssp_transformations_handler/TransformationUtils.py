@@ -131,8 +131,8 @@ class TransformationYamlProcessor:
         """
 
         transformations_per_strategy = {}
-        strategy_names =  self.get_strategy_cols()
-        df = self.load_excel_data()
+        strategy_names =  self.get_strategy_names()
+        df = self.load_scenario_mapping_excel()
         for strategy in strategy_names:
             subset_df = df[['transformation_code', strategy]]
             subset_df = subset_df.dropna()
@@ -214,7 +214,38 @@ class TransformationYamlProcessor:
                     print(f"Error processing file {yaml_name} for column {column}: {e}")
 
 class StrategyCSVHandler:
+    """
+    A class to handle strategy CSV files and YAML mappings for transformations.
+    Methods:
+        __init__(csv_file_path, yaml_dir_path, yaml_mapping_file, transformation_per_strategy_dict):
+            Initializes the StrategyCSVHandler class with the given parameters.
+        load_strategy_definitions_csv():
+        load_yaml_mapping():
+        get_strategy_id(strategy_group):
+        get_strategy_code(strategy_group, strategy_name):
+        get_transformation_specification(yaml_file_suffix):
+        save_csv():
+        add_strategy(strategy_group, description, yaml_file_suffix):
+    """
+
     def __init__(self, csv_file_path, yaml_dir_path, yaml_mapping_file, transformation_per_strategy_dict):
+        """
+        Initializes the TransformationUtils class with the given parameters.
+
+        Args:
+            csv_file_path (str): The file path to the CSV file containing strategy definitions.
+            yaml_dir_path (str): The directory path where YAML files are located.
+            yaml_mapping_file (str): The file name of the YAML mapping file.
+            transformation_per_strategy_dict (dict): A dictionary containing transformations per strategy.
+
+        Attributes:
+            csv_file_path (str): The file path to the CSV file containing strategy definitions.
+            strategy_definitions_df (pd.DataFrame): DataFrame containing strategy definitions loaded from the CSV file.
+            yaml_dir_path (str): The directory path where YAML files are located.
+            yaml_mapping_file (str): The file name of the YAML mapping file.
+            mapping (dict): The loaded YAML mapping.
+            transformations_per_strategy_dict (dict): A dictionary containing transformations per strategy.
+        """
         self.csv_file_path = csv_file_path
         self.strategy_definitions_df = self.load_strategy_definitions_csv()
         self.yaml_dir_path = yaml_dir_path
@@ -357,80 +388,83 @@ class StrategyCSVHandler:
         # Join transformation codes with a pipe symbol, excluding the trailing one
         transformation_specification = '|'.join(transformation_codes_filtered)
         return transformation_specification
-
-    def add_strategy(self, strategy_group, description, yaml_file_suffix, custom_id=None, update_flag=False):
+    
+    
+    def save_csv(self):
         """
-        Add or update a strategy in the dataset.
+        Save the DataFrame back to the CSV file.
+        This method attempts to save the DataFrame stored in the `strategy_definitions_df` attribute
+        to the CSV file specified by the `csv_file_path` attribute. If an error occurs during the saving
+        process, an error message is printed.
+        Returns:
+            None
+        """
+
+        # Save the DataFrame back to the CSV file
+        try:
+            self.strategy_definitions_df.to_csv(self.csv_file_path, index=False)
+        except Exception as e:
+            print(f"Error saving CSV file: {e}")
+    
+    
+    
+    def add_strategy(self, strategy_group, description, yaml_file_suffix):
+        """
+        Adds or updates a strategy in the strategy definitions DataFrame.
+        This method reloads the strategy definitions DataFrame to ensure it has the latest version,
+        generates a strategy code, and either updates an existing strategy or adds a new one based
+        on whether the strategy code already exists.
         Parameters:
         strategy_group (str): The group to which the strategy belongs.
         description (str): A description of the strategy.
         yaml_file_suffix (str): The suffix of the YAML file associated with the strategy.
-        custom_id (int, optional): A custom ID for the strategy. Required if update_flag is True. Defaults to None.
-        update_flag (bool, optional): Flag indicating whether to update an existing strategy. Defaults to False.
+        Raises:
+        ValueError: If the generated strategy code already exists when trying to add a new strategy.
         Returns:
         None
-        Raises:
-        ValueError: If update_flag is True and custom_id is not provided.
-        ValueError: If update_flag is True and custom_id does not exist in the dataset.
-        ValueError: If custom_id is provided and already exists in the dataset.
-        ValueError: If the generated strategy_code already exists in the dataset.
         """
+       
         # Reload the strategy_definitions_df to ensure we have the latest version
         self.strategy_definitions_df = self.load_strategy_definitions_csv()
 
-        # If update_flag is true then we update the current strategy
-        if update_flag:
-            # Check if custom_id is provided
-            if custom_id is None:
-                print("Error: custom_id is required for updating a strategy.")
-                return
-            # Check if the custom_id exists
-            if custom_id not in self.strategy_definitions_df['strategy_id'].values:
-                print(f"Error: strategy_id {custom_id} does not exist. Please provide a valid ID.")
-                return
-            
+        # Create strategy_code
+        strategy_code = self.get_strategy_code(strategy_group, yaml_file_suffix)
+
+        # Check if the strategy code already exists in strategy_definitions_df so we can update it
+        if strategy_code in self.strategy_definitions_df['strategy_code'].values:
+            print(f"INFO: Strategy code {strategy_code} already exists in the strategy definitions. Strategy will be updated...")
+
             # Get the index of the row to update
-            idx = self.strategy_definitions_df.index[self.strategy_definitions_df['strategy_id'] == custom_id].tolist()[0]
+            idx = self.strategy_definitions_df.index[self.strategy_definitions_df['strategy_code'] == strategy_code].tolist()[0]
 
             # Update the transformation_specification
             self.strategy_definitions_df.at[idx, 'transformation_specification'] = self.get_transformation_specification(yaml_file_suffix)
 
+            # Save the updated DataFrame to the CSV file
             self.save_csv()
-            print(f"Updated row with strategy_id {custom_id}")
-            return
+            print(f"Updated row with strategy_code {strategy_code}")
         
-        # Check if a custom ID was provided
-        if custom_id is not None:
-            if custom_id in self.strategy_definitions_df['strategy_id'].values:
-                print(f"Error: strategy_id {custom_id} already exists. Please use a different ID or leave it to be auto-generated.")
-                return
-            strategy_id = custom_id
-        else:
+        else: # Add a new strategy if the strategy code does not exist
+            # Get the next available strategy ID
             strategy_id = self.get_strategy_id(strategy_group)
 
-        # Generate the strategy_code and check for uniqueness
-        strategy_code = self.get_strategy_code(strategy_group, yaml_file_suffix)
-        if strategy_code in self.strategy_definitions_df['strategy_code'].values:
-            print(f"Error: strategy_code {strategy_code} already exists. Please use a different code or eliminate the existing one.")
-            return
+            # Generate the strategy_code and check for uniqueness
+            strategy_code = self.get_strategy_code(strategy_group, yaml_file_suffix)
+            if strategy_code in self.strategy_definitions_df['strategy_code'].values:
+                raise ValueError(f"Strategy_code {strategy_code} already exists. Please use a different code or eliminate the existing one.")
 
-        new_row = {
-            'strategy_id': strategy_id,  # Keep as an integer
-            'strategy_code': strategy_code,
-            'strategy': yaml_file_suffix,
-            'description': description,
-            'transformation_specification': self.get_transformation_specification(yaml_file_suffix)
-        }
+            new_row = {
+                'strategy_id': strategy_id,  # Keep as an integer
+                'strategy_code': strategy_code,
+                'strategy': yaml_file_suffix,
+                'description': description,
+                'transformation_specification': self.get_transformation_specification(yaml_file_suffix)
+            }
 
-        self.strategy_definitions_df = pd.concat([self.strategy_definitions_df, pd.DataFrame([new_row])], ignore_index=True)
-        self.save_csv()
-        print(f"Updated file with new row: {new_row}")
-      
+            self.strategy_definitions_df = pd.concat([self.strategy_definitions_df, pd.DataFrame([new_row])], ignore_index=True)
+            self.save_csv()
+            print(f"Updated file with new row: {new_row}")
 
-    def save_csv(self):
-        # Save the DataFrame back to the CSV file
-        try:
-            self.strategy_definitions_df.to_csv(self.csv_file_path, index=False)
-            print(f"Data saved to {self.csv_file_path}")
-        except Exception as e:
-            print(f"Error saving CSV file: {e}")
+        return None
+
+    
