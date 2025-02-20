@@ -113,7 +113,6 @@ class TransformationYamlProcessor:
             yaml.dump(yaml_content, new_file)
     
     
-    #TODO: CHECK THIS
     def get_transformations_per_strategy_dict(self):
         """
         Generates a dictionary of transformation codes for each strategy.

@@ -198,4 +198,68 @@ class GeneralUtils:
         df = df.fillna(0)
 
         return df
+    
+    @staticmethod
+    def check_frac_groups(ssp_input_df, frac_vars_mapping_file_path):
+        """
+        Checks if the sum of fractional groups in the input DataFrame is within the range [0, 1].
+        This function reads a mapping file to identify subgroups of columns in the input DataFrame.
+        For each subgroup, it calculates the row-wise sum of the columns and checks if the sums are within the range [0, 1].
+        If any row sum is outside this range, a message is printed indicating the issue.
+        Args:
+            ssp_input_df (pd.DataFrame): The input DataFrame containing the data to be checked.
+            frac_vars_mapping_file_path (str): The file path to the Excel file containing the mapping of fractional variables.
+        Returns:
+            None
+        """
+        
+       
+        def test_sum(row_sums, subgroup_prefix):
+
+            if row_sums.min() < 0 or row_sums.max() > 1:
+                print(f"Row sums for {subgroup_prefix} are not in range the min is {row_sums.min()} and the max is {row_sums.max()}. Please check the data.")
+
+            return None
+
+        # Read energy frac vars
+        df_frac_vars = pd.read_excel(frac_vars_mapping_file_path)
+        
+        # Get subgroup prefix list
+        prefix_list = df_frac_vars['prefix'].unique()
+
+        # Normalize subgroup cols
+        for subgroup_prefix in prefix_list:
+            # Get all columns belonging to the current subgroup
+            subgroup_cols = [i for i in ssp_input_df.columns if subgroup_prefix in i]
+
+            # Calculate the row-wise sum of the subgroup columns
+            row_sums = ssp_input_df[subgroup_cols].sum(axis=1)
+
+            # Check if the row sums are equal to 1
+            test_sum(row_sums, subgroup_prefix)
+
+        return None
+    
+    @staticmethod
+    def check_individual_frac_vars(ssp_input_df):
+        """
+        Check if the values of individual fractional variables are within the range [0, 1].
+        Parameters:
+            ssp_input_df (pd.DataFrame): The DataFrame containing the SSP input data.
+        Returns:
+            None
+        """
+        #TODO: Implement this method
+
+        # Get all columns that start with frac_
+        frac_vars_cols = [col for col in ssp_input_df.columns if col.startswith('frac_')]
+
+        # Check if the values are within the range [0, 1]
+        for col in frac_vars_cols:
+            if ssp_input_df[col].min() < 0 or ssp_input_df[col].max() > 1:
+                print(f"Values in column {col} are not within the range [0, 1]. Please check the data.")
+            else:
+                pass
+        
+        return None
 
