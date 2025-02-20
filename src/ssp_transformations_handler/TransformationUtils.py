@@ -3,52 +3,78 @@ import pandas as pd
 import yaml
 
 
-class ExcelYAMLHandler:
-    def __init__(self, excel_file, yaml_directory, sheet_name='yaml'):
-        """
-        Initializes the TransformationUtils class with the provided parameters.
-
-        Args:
-            excel_file (str): The path to the Excel file to be processed.
-            yaml_directory (str): The directory where YAML files are stored.
-            sheet_name (str, optional): The name of the sheet in the Excel file to be processed. Defaults to 'yaml'.
-
-        Attributes:
-            excel_file (str): The path to the Excel file to be processed.
-            sheet_name (str): The name of the sheet in the Excel file to be processed.
-            yaml_directory (str): The directory path where YAML files are stored.
-            data (DataFrame): The data loaded from the specified Excel sheet.
-        """
-        self.excel_file = excel_file
-        self.sheet_name = sheet_name
-        self.yaml_directory = yaml_directory
-        self.data = self.load_excel_data()
+class TransformationYamlProcessor:
+    """
+    TransformationYamlProcessor is a class designed to handle the processing of YAML files based on scenario mappings provided in an Excel file. It provides methods to load scenario mappings, retrieve strategy names, load YAML data, save modified YAML files, and process YAML files according to specified transformations.
+    Methods:
+        __init__(self, scenario_mapping_excel_path, yaml_dir_path, sheet_name='yaml'):
+            Initializes the TransformationYamlProcessor class with the given parameters.
+        load_scenario_mapping_excel(self):
+        load_yaml_data(self, yaml_file_path):
+        get_strategy_names(self):
+        save_yaml_file(self, yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val):
+        get_transformations_per_strategy_dict(self):
+        process_yaml_files(self):
+    """
     
-    def load_excel_data(self):
+    def __init__(self, scenario_mapping_excel_path, yaml_dir_path, sheet_name='yaml'):
         """
-        Load the Excel sheet into a DataFrame.
-
-        This method attempts to read an Excel file specified by the instance's
-        `excel_file` attribute and load the data from the sheet specified by the
-        `sheet_name` attribute into a pandas DataFrame.
-
+        Initializes the TransformationUtils class with the given parameters.
+        Args:
+            scenario_mapping_excel_path (str): The file path to the scenario mapping Excel file.
+            yaml_dir_path (str): The directory path where YAML files are stored.
+            sheet_name (str, optional): The name of the sheet in the Excel file to load. Defaults to 'yaml'.
+        Attributes:
+            scenario_mapping_excel_path (str): Stores the file path to the scenario mapping Excel file.
+            sheet_name (str): Stores the name of the sheet in the Excel file to load.
+            yaml_dir_path (str): Stores the directory path where YAML files are stored.
+            mapping_df (DataFrame): DataFrame containing the loaded scenario mapping from the Excel file.
+        """
+        
+        self.scenario_mapping_excel_path = scenario_mapping_excel_path
+        self.sheet_name = sheet_name
+        self.yaml_dir_path = yaml_dir_path
+        self.mapping_df = self.load_scenario_mapping_excel()
+    
+    def load_scenario_mapping_excel(self):
+        """
+        Load the scenario mapping from an Excel file into a DataFrame.
+        This method attempts to read an Excel file specified by the 
+        `scenario_mapping_excel_path` attribute and loads the data from the 
+        sheet specified by the `sheet_name` attribute into a pandas DataFrame.
         Returns:
-            pd.DataFrame: A DataFrame containing the data from the specified Excel sheet.
-            None: If there is an error loading the Excel file, None is returned.
-
+            pd.DataFrame: A DataFrame containing the data from the specified 
+            Excel sheet if the file is successfully loaded.
+            None: If there is an error loading the Excel file.
         Raises:
-            Exception: If there is an error loading the Excel file, an exception is caught
-                       and an error message is printed.
+            Exception: If there is an error loading the Excel file, an exception 
+            is caught and an error message is printed.
         """
+       
         # Load the Excel sheet into a DataFrame
         try:
-            df = pd.read_excel(self.excel_file, sheet_name=self.sheet_name)
+            df = pd.read_excel(self.scenario_mapping_excel_path, sheet_name=self.sheet_name)
             return df
         except Exception as e:
             print(f"Error loading Excel file: {e}")
             return None
     
-    def get_strategy_cols(self):
+    def load_yaml_data(self, yaml_file_path):
+        """
+        Load the content of a YAML file into a dictionary.
+        This method reads the content of a YAML file specified by the `yaml_file` 
+        parameter and returns the data as a dictionary.
+        Args:
+            yaml_file (str): The path to the YAML file to load.
+        Returns:
+            dict: A dictionary containing the data from the YAML file.
+        """
+        with open(yaml_file_path, 'r') as file:
+            yaml_data = yaml.safe_load(file)
+        return yaml_data
+    
+    
+    def get_strategy_names(self):
         """
         Retrieve column names that start with 'strategy'.
         This method filters the columns of the DataFrame stored in the `data` attribute
@@ -57,10 +83,11 @@ class ExcelYAMLHandler:
             list: A list of column names that start with 'strategy'.
         """
         # Get col names
-        col_names = self.data.columns
+        col_names = self.mapping_df.columns
        
-        # return only strategy cols
+        # return only strategy col names
         return [col for col in col_names if col.startswith('strategy')]
+    
     
     def save_yaml_file(self, yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val):
         """
@@ -81,10 +108,12 @@ class ExcelYAMLHandler:
         yaml_content['identifiers']['transformation_code'] = f'{transformation_code}_{column.upper()}'
         yaml_content['identifiers']['transformation_name'] = f'Scaled Default Max Parameters by {scalar_val} - {subsector}: {transformation_name}' # TODO Change this format
         new_yaml_name = f"{os.path.splitext(yaml_name)[0]}_{column}.yaml"
-        new_yaml_path = os.path.join(self.yaml_directory, new_yaml_name)
+        new_yaml_path = os.path.join(self.yaml_dir_path, new_yaml_name)
         with open(new_yaml_path, 'w') as new_file:
             yaml.dump(yaml_content, new_file)
     
+    
+    #TODO: CHECK THIS
     def get_transformations_per_strategy_dict(self):
         """
         Generates a dictionary of transformation codes for each strategy.
@@ -112,9 +141,7 @@ class ExcelYAMLHandler:
             transformations_per_strategy[strategy] = subset_transformation_codes
         return transformations_per_strategy
 
-
-    
-    def process_yaml_files(self, overwrite_mult_param_transformations=True):
+    def process_yaml_files(self):
         """
         Processes YAML files based on the data loaded into the instance.
         This method iterates over each row in the DataFrame stored in `self.data`, 
@@ -140,28 +167,31 @@ class ExcelYAMLHandler:
             This method assumes that the DataFrame `self.data` and the directory 
             `self.yaml_directory` are already set up in the instance.
         """
-        # Ensure that the data was loaded successfully
-        if self.data is None:
-            print("No data available to process.")
-            return
+        # Check if mapping df is none or empty
+        if self.mapping_df is None or self.mapping_df.empty:
+            raise ValueError("No data found in the mapping excel file.")
         
-        # Loop over each row in the DataFrame
-        for _, row in self.data.iterrows():
+
+        # Loop over each row in the Scenario Mapping Excel
+        for _, row in self.mapping_df.iterrows():
+
+            # Get data from the row
             yaml_name = row['transformation_yaml_name']
             transformation_code = row['transformation_code']
             transformation_name = row['transformation_name']
             subsector = row['subsector']
             
-            yaml_path = os.path.join(self.yaml_directory, yaml_name)
+            # Construct the path to the original YAML file
+            yaml_path = os.path.join(self.yaml_dir_path, yaml_name)
 
             if not os.path.exists(yaml_path):
-                print(f"YAML file {yaml_name} not found in directory {self.yaml_directory}.")
+                print(f"Original YAML file {yaml_name} not found in directory {self.yaml_dir_path}.")
                 continue
             
-            # Process each relevant column except 'transformation_yaml_name' and 'transformation_code'
-            for column in self.get_strategy_cols():
+            # Process each strategy column
+            for column in self.get_strategy_names():
 
-                # This is the magnitude/scalar that we are going to multiply by the default max value in each yaml
+                # This is the magnitude/scalar that we are going to multiply by the default max value in each original yaml
                 scalar_val = row[column] 
 
                 # Skip if the value is NaN which means the transformation is not used for the strategy
@@ -170,40 +200,34 @@ class ExcelYAMLHandler:
 
                 try:
                     # Load the original YAML file
-                    with open(yaml_path, 'r') as file:
-                        yaml_content = yaml.safe_load(file)
+                    yaml_content = self.load_yaml_data(yaml_path)
                     
-                    # Checks for 'parameters' and 'magnitude'
-                    # TODO: This will eventually be different we will multiply all by scalar val
-                    if 'parameters' in yaml_content:
-                        parameters = yaml_content['parameters']
-                        if 'magnitude' not in parameters:
-                            if overwrite_mult_param_transformations:
-                                print(f"YAML file {yaml_name} for strategy {column} set to default because it does not have magnitude attribute")
-                                self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
-                                continue
-                            else:
-                                # Check if the yaml already exists
-                                if os.path.exists(os.path.join(self.yaml_directory, f"{os.path.splitext(yaml_name)[0]}_{column}.yaml")):
-
-                                    print(f"YAML file {yaml_name} for strategy {column} wasn't updated. Please check it manually.")
-                                
-                                else:
-                                    print(f"Created new YAML file {yaml_name} for strategy {column} and set to default because it does not have magnitude attribute")
-                                    self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
-                                
-                                continue
-                    else:
-                        print(f"YAML file {yaml_name} for strategy {column} set to default because it does not have parameters attribute")
+                    # Checks if the YAML file has 'parameters' attribute
+                    if 'parameters' not in yaml_content:
+                        print(f"YAML file {yaml_name} for strategy {column} doesn't have 'parameters' attribute. Please check it manually.")
+                    
+                    # Checks if the YAML file has 'parameters' and 'magnitude' attributes
+                    elif 'parameters' in yaml_content and 'magnitude' in yaml_content['parameters']:
+                        # Update the 'magnitude' attribute
+                        curr_magnitude = float(yaml_content['parameters']['magnitude'])
+                        yaml_content['parameters']['magnitude'] = float(scalar_val) * curr_magnitude
+                        
+                        # Save the modified YAML file
                         self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
-                        continue
                     
-                    # Update the 'magnitude' field if applicable
-                    curr_magnitude = float(yaml_content['parameters']['magnitude'])
-                    yaml_content['parameters']['magnitude'] = float(scalar_val) * curr_magnitude
                     
-                    # Save the modified YAML file
-                    self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
+                    # Checks if the YAML file has 'parameters' attribute but not 'magnitude' attribute so we treat it as a special case
+                    elif 'parameters' in yaml_content and 'magnitude' not in yaml_content['parameters']:
+
+                        # Check if the yaml for the current strategy already exists
+                        if os.path.exists(os.path.join(self.yaml_dir_path, f"{os.path.splitext(yaml_name)[0]}_{column}.yaml")):
+                            print(f"YAML file {yaml_name} already exist for strategy {column}. Please check it manually.")
+                        
+                        # Else we create a new yaml file for the strategy and set it to default
+                        else:
+                            print(f"Created new YAML file {yaml_name} for strategy {column} and set to default because its a special case")
+                            self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
+                    
                 except Exception as e:
                     print(f"Error processing file {yaml_name} for column {column}: {e}")
 
