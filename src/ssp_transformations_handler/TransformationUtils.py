@@ -141,32 +141,14 @@ class TransformationYamlProcessor:
             transformations_per_strategy[strategy] = subset_transformation_codes
         return transformations_per_strategy
 
+    def overwrite_yaml_to_default(self, yaml_file_path):
+        #TODO: Implement this method
+        pass
+    
+    
+    
     def process_yaml_files(self):
-        """
-        Processes YAML files based on the data loaded into the instance.
-        This method iterates over each row in the DataFrame stored in `self.data`, 
-        retrieves the corresponding YAML file, and updates its 'magnitude' parameter 
-        based on the scalar values provided in the DataFrame. The updated YAML files 
-        are then saved to the specified directory.
-        The method performs the following steps:
-        1. Checks if data is loaded; if not, prints a message and returns.
-        2. Iterates over each row in the DataFrame.
-        3. Constructs the path to the YAML file using the 'transformation_yaml_name' column.
-        4. Checks if the YAML file exists; if not, prints a message and continues to the next row.
-        5. For each relevant column (excluding 'transformation_yaml_name' and 'transformation_code'):
-            a. Retrieves the scalar value from the DataFrame.
-            b. Skips processing if the scalar value is NaN.
-            c. Loads the YAML file.
-            d. Checks for the presence of 'parameters' and 'magnitude' attributes.
-            e. Updates the 'magnitude' attribute by multiplying it with the scalar value.
-            f. Saves the modified YAML file.
-        6. Handles exceptions and prints error messages if any issues occur during processing.
-        Raises:
-            Exception: If an error occurs while processing a YAML file.
-        Note:
-            This method assumes that the DataFrame `self.data` and the directory 
-            `self.yaml_directory` are already set up in the instance.
-        """
+       
         # Check if mapping df is none or empty
         if self.mapping_df is None or self.mapping_df.empty:
             raise ValueError("No data found in the mapping excel file.")
@@ -232,15 +214,15 @@ class TransformationYamlProcessor:
                     print(f"Error processing file {yaml_name} for column {column}: {e}")
 
 class StrategyCSVHandler:
-    def __init__(self, csv_file, yaml_dir_path, yaml_mapping_file, transformation_per_strategy_dict):
-        self.csv_file = csv_file
-        self.data = self.load_csv()
+    def __init__(self, csv_file_path, yaml_dir_path, yaml_mapping_file, transformation_per_strategy_dict):
+        self.csv_file_path = csv_file_path
+        self.strategy_definitions_df = self.load_strategy_definitions_csv()
         self.yaml_dir_path = yaml_dir_path
         self.yaml_mapping_file = yaml_mapping_file
         self.mapping = self.load_yaml_mapping()
         self.transformations_per_strategy_dict = transformation_per_strategy_dict
     
-    def load_csv(self):
+    def load_strategy_definitions_csv(self):
         """
         Loads a CSV file into a pandas DataFrame. If the file is not found, it creates an empty DataFrame with predefined columns.
         
@@ -252,13 +234,13 @@ class StrategyCSVHandler:
             Exception: For any other exceptions that occur during the loading of the CSV file.
         """
         try:
-            df = pd.read_csv(self.csv_file)
+            df = pd.read_csv(self.csv_file_path)
             # Convert 'strategy_id' to integers, handle any non-integer values
             df['strategy_id'] = pd.to_numeric(df['strategy_id'], errors='coerce')
             df['strategy_id'] = df['strategy_id'].fillna(0).astype(int)
             return df
         except FileNotFoundError:
-            print(f"{self.csv_file} not found. Creating a new DataFrame.")
+            print(f"{self.csv_file_path} not found. Creating a new DataFrame.")
             columns = ['strategy_id', 'strategy_code', 'strategy', 'description', 'transformation_specification']
             return pd.DataFrame(columns=columns)
         except Exception as e:
@@ -313,7 +295,7 @@ class StrategyCSVHandler:
 
         id_range = self.mapping[strategy_group]
         min_id, max_id = map(int, id_range.split('-'))
-        existing_ids = self.data.loc[self.data['strategy_code'].str.startswith(strategy_group), 'strategy_id']
+        existing_ids = self.strategy_definitions_df.loc[self.strategy_definitions_df['strategy_code'].str.startswith(strategy_group), 'strategy_id']
 
         # Ensure existing_ids is numeric
         existing_ids = pd.to_numeric(existing_ids, errors='coerce').dropna().astype(int)
@@ -393,8 +375,8 @@ class StrategyCSVHandler:
         ValueError: If custom_id is provided and already exists in the dataset.
         ValueError: If the generated strategy_code already exists in the dataset.
         """
-        # Reload the data to ensure we have the latest version
-        self.data = self.load_csv()
+        # Reload the strategy_definitions_df to ensure we have the latest version
+        self.strategy_definitions_df = self.load_strategy_definitions_csv()
 
         # If update_flag is true then we update the current strategy
         if update_flag:
@@ -403,15 +385,15 @@ class StrategyCSVHandler:
                 print("Error: custom_id is required for updating a strategy.")
                 return
             # Check if the custom_id exists
-            if custom_id not in self.data['strategy_id'].values:
+            if custom_id not in self.strategy_definitions_df['strategy_id'].values:
                 print(f"Error: strategy_id {custom_id} does not exist. Please provide a valid ID.")
                 return
             
             # Get the index of the row to update
-            idx = self.data.index[self.data['strategy_id'] == custom_id].tolist()[0]
+            idx = self.strategy_definitions_df.index[self.strategy_definitions_df['strategy_id'] == custom_id].tolist()[0]
 
             # Update the transformation_specification
-            self.data.at[idx, 'transformation_specification'] = self.get_transformation_specification(yaml_file_suffix)
+            self.strategy_definitions_df.at[idx, 'transformation_specification'] = self.get_transformation_specification(yaml_file_suffix)
 
             self.save_csv()
             print(f"Updated row with strategy_id {custom_id}")
@@ -419,7 +401,7 @@ class StrategyCSVHandler:
         
         # Check if a custom ID was provided
         if custom_id is not None:
-            if custom_id in self.data['strategy_id'].values:
+            if custom_id in self.strategy_definitions_df['strategy_id'].values:
                 print(f"Error: strategy_id {custom_id} already exists. Please use a different ID or leave it to be auto-generated.")
                 return
             strategy_id = custom_id
@@ -428,7 +410,7 @@ class StrategyCSVHandler:
 
         # Generate the strategy_code and check for uniqueness
         strategy_code = self.get_strategy_code(strategy_group, yaml_file_suffix)
-        if strategy_code in self.data['strategy_code'].values:
+        if strategy_code in self.strategy_definitions_df['strategy_code'].values:
             print(f"Error: strategy_code {strategy_code} already exists. Please use a different code or eliminate the existing one.")
             return
 
@@ -440,17 +422,15 @@ class StrategyCSVHandler:
             'transformation_specification': self.get_transformation_specification(yaml_file_suffix)
         }
 
-        self.data = pd.concat([self.data, pd.DataFrame([new_row])], ignore_index=True)
+        self.strategy_definitions_df = pd.concat([self.strategy_definitions_df, pd.DataFrame([new_row])], ignore_index=True)
         self.save_csv()
         print(f"Updated file with new row: {new_row}")
       
 
-
-    
     def save_csv(self):
         # Save the DataFrame back to the CSV file
         try:
-            self.data.to_csv(self.csv_file, index=False)
-            print(f"Data saved to {self.csv_file}")
+            self.strategy_definitions_df.to_csv(self.csv_file_path, index=False)
+            print(f"Data saved to {self.csv_file_path}")
         except Exception as e:
             print(f"Error saving CSV file: {e}")
