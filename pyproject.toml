@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ssp_transformations_handler"
-version = "0.1.3"
+version = "0.1.4"
 description = "A package to handle SSP model transformations"
 authors = [{ name = "Juan Antonio Robledo Lara", email = "jroblar98@gmail.com" }]
 readme = "README.md"

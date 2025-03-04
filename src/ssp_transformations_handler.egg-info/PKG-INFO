@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: ssp_transformations_handler
-Version: 0.1.3
+Version: 0.1.4
 Summary: A package to handle SSP model transformations
 Author-email: Juan Antonio Robledo Lara <jroblar98@gmail.com>
 License: MIT License
