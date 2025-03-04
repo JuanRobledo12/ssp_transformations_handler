@@ -6,6 +6,6 @@ identifiers:
   transformation_name: 'Scaled Default Max Parameters by 0.1 - SOIL: Improve fertilizer
     application'
 parameters:
-  magnitude: 0.020000000000000004
+  magnitude: 0.02
   vec_implementation_ramp: null
 transformer: TFR:SOIL:DEC_N_APPLIED
