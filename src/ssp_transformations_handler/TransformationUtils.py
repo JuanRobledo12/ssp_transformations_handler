@@ -191,7 +191,7 @@ class TransformationYamlProcessor:
                     elif 'parameters' in yaml_content and 'magnitude' in yaml_content['parameters']:
                         # Update the 'magnitude' attribute
                         curr_magnitude = float(yaml_content['parameters']['magnitude'])
-                        yaml_content['parameters']['magnitude'] = float(scalar_val) * curr_magnitude
+                        yaml_content['parameters']['magnitude'] = round(float(scalar_val) * curr_magnitude, 3)
                         
                         # Save the modified YAML file
                         self.save_yaml_file(yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val)
