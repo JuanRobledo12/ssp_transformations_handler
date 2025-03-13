@@ -6,7 +6,7 @@ class GeneralUtils:
     """
     A utility class for general operations including reading YAML files and manipulating pandas DataFrames.
     Methods:
-        get_yaml_values(file_path):
+        read_yaml(file_path):
         compare_dfs(df_example, df_input):
         add_missing_cols(df_example, df_input):
         remove_additional_cols(df_example, df_input):
@@ -14,54 +14,22 @@ class GeneralUtils:
     """
    
     @staticmethod
-    def get_yaml_values(file_path):
+    def read_yaml(file_path):
         """
-        Reads a YAML file and retrieves specific values.
-        Args:
-            file_path (str): The path to the YAML file.
+        Read a YAML file and return the content as a dictionary.
+
+        Parameters:
+        file_path (str): The file path to the YAML file.
+
         Returns:
-            dict: A dictionary containing the retrieved values:
-                - "country_name" (str): The name of the country.
-                - "ssp_input_file_name" (str): The name of the SSP input file.
-                - "ssp_transformation_cw" (str): The SSP transformation CW.
-                - "energy_model_flag" (str): The energy model flag.
-            None: If the file is not found or there is an error parsing the YAML file.
-        Raises:
-            FileNotFoundError: If the file is not found at the specified path.
-            yaml.YAMLError: If there is an error parsing the YAML file.
+        dict: A dictionary containing the content of the YAML file.
         """
-        
-        try:
-            # Open and load the YAML file
-            with open(file_path, 'r') as file:
-                data = yaml.safe_load(file)
-            
-            # Retrieve the specific values
-            country_name = data.get("country_name", "Not found")
-            ssp_input_file_name = data.get("ssp_input_file_name", "Not found")
-            ssp_transformation_cw = data.get("ssp_transformation_cw", "Not found")
-            energy_model_flag = data.get("energy_model_flag", "Not found")
-            
-            # Print the values
-            print("Country Name:", country_name)
-            print("SSP Input File Name:", ssp_input_file_name)
-            print("SSP Transformation CW:", ssp_transformation_cw)
-            print("Energy Model Flag:", energy_model_flag)
-            
-            # Return the values as a dictionary
-            return {
-                "country_name": country_name,
-                "ssp_input_file_name": ssp_input_file_name,
-                "ssp_transformation_cw": ssp_transformation_cw,
-                "energy_model_flag": energy_model_flag
-            }
-        
-        except FileNotFoundError:
-            print(f"Error: File not found at {file_path}")
-            return None
-        except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
-            return None
+
+        with open(file_path, 'r') as file:
+            data = yaml.safe_load(file)
+
+        return data
+       
 
     @staticmethod   
     def compare_dfs(df_example, df_input):
