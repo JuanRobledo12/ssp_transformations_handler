@@ -35,6 +35,18 @@ class TransformationYamlProcessor:
         self.sheet_name = sheet_name
         self.yaml_dir_path = yaml_dir_path
         self.mapping_df = self.load_scenario_mapping_excel()
+        self._configure_yaml_representer()
+
+    class CustomDumper(yaml.SafeDumper):
+        def represent_str(self, data):
+            # Use explicit double quote style for strings that require quoting.
+            if isinstance(data, str) and (':' in data or '"' in data):
+                return self.represent_scalar('tag:yaml.org,2002:str', data, style='"')
+            return self.represent_scalar('tag:yaml.org,2002:str', data)
+    
+    def _configure_yaml_representer(self):
+        # Register the custom representer for strings with our CustomDumper.
+        yaml.add_representer(str, self.CustomDumper.represent_str, Dumper=self.CustomDumper)
     
     def load_scenario_mapping_excel(self):
         """
@@ -88,30 +100,33 @@ class TransformationYamlProcessor:
         # return only strategy col names
         return [col for col in col_names if col.startswith('strategy')]
     
-    
     def save_yaml_file(self, yaml_content, yaml_name, column, transformation_code, subsector, transformation_name, scalar_val):
         """
         Save the given YAML content to a file with a modified name and updated identifiers.
-
         Args:
             yaml_content (dict): The content to be saved in the YAML file.
             yaml_name (str): The original name of the YAML file.
             column (str): The column name to be included in the transformation code and new file name.
-            transformation_code (str): The transformation code to be included in the identifiers.
-            subsector (str): The subsector to be included in the transformation name.
-            transformation_name (str): The transformation name to be included in the identifiers.
-            scalar_val (float): The scalar value to be included in the transformation name.
-
-        Returns:
-            None
+            transformation_code (str): The transformation code to be updated.
+            subsector (str): The subsector to be used in the transformation name.
+            transformation_name (str): The transformation name to be updated.
+            scalar_val (float): The scalar value applied to the parameters.
         """
-        yaml_content['identifiers']['transformation_code'] = f'{transformation_code}_{column.upper()}'
-        yaml_content['identifiers']['transformation_name'] = f'Scaled Default Max Parameters by {scalar_val} - {subsector}: {transformation_name}' # TODO Change this format
+        # Update identifiers with the proper naming
+        yaml_content['identifiers']['transformation_code'] = f"{transformation_code}_{column.upper()}"
+        yaml_content['identifiers']['transformation_name'] = f"Scaled Default Max Parameters by {scalar_val} - {subsector}: {transformation_name}"
+        
+        # Update description and transformer if needed (currently just resetting them)
+        description = yaml_content['description']
+        transformer = yaml_content['transformer']
+        yaml_content['description'] = f"{description}"
+        yaml_content['transformer'] = f"{transformer}"
+
         new_yaml_name = f"{os.path.splitext(yaml_name)[0]}_{column}.yaml"
         new_yaml_path = os.path.join(self.yaml_dir_path, new_yaml_name)
         with open(new_yaml_path, 'w') as new_file:
-            yaml.dump(yaml_content, new_file)
-    
+            yaml.dump(yaml_content, new_file, Dumper=self.CustomDumper, default_flow_style=False)
+        
     
     def get_transformations_per_strategy_dict(self):
         """
