@@ -1,6 +1,6 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: ssp_transformations_handler
-Version: 0.1.5
+Version: 0.1.6
 Summary: A package to handle SSP model transformations
 Author-email: Juan Antonio Robledo Lara <jroblar98@gmail.com>
 License: MIT License
@@ -29,6 +29,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: pandas
 Requires-Dist: pyyaml
+Dynamic: license-file
 
 # ssp_transformation_handler
 Package with utilities to handle the excel transformations matrix, transformations yaml and strategy template when running SSP model
