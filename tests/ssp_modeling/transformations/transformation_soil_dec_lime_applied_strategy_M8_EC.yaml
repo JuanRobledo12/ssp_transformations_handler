@@ -1,10 +1,10 @@
 citations: null
 description: Decrease lime applied to soils (default 5%)
 identifiers:
-  transformation_code: TX:SOIL:DEC_LIME_APPLIED_STRATEGY_M8_EC
-  transformation_name: 'Scaled Default Max Parameters by 0.1 - SOIL: Improve lime
-    application'
+  transformation_code: "TX:SOIL:DEC_LIME_APPLIED_STRATEGY_M8_EC"
+  transformation_name: "Scaled Default Max Parameters by 0.1 - SOIL: Improve lime\
+    \ application"
 parameters:
   magnitude: 0.02
   vec_implementation_ramp: null
-transformer: TFR:SOIL:DEC_LIME_APPLIED
+transformer: "TFR:SOIL:DEC_LIME_APPLIED"
