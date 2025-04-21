@@ -5,6 +5,6 @@ identifiers:
   transformation_name: "Scaled Default Max Parameters by 0.1 - TRWW: Increase septic\
     \ compliance"
 parameters:
-  magnitude: 0.09
+  magnitude: 0.09000000000000001
   vec_implementation_ramp: null
 transformer: "TFR:TRWW:INC_COMPLIANCE_SEPTIC"

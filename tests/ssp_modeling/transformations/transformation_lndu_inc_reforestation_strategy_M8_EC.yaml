@@ -7,6 +7,6 @@ parameters:
   cats_inflow_restriction:
   - croplands
   - other
-  magnitude: 0.02
+  magnitude: 0.020000000000000004
   vec_implementation_ramp: null
 transformer: "TFR:LNDU:INC_REFORESTATION"

@@ -5,6 +5,6 @@ identifiers:
   transformation_name: "Scaled Default Max Parameters by 0.1 - IPPU: Reduce use of\
     \ PFCs"
 parameters:
-  magnitude: 0.01
+  magnitude: 0.010000000000000002
   vec_implementation_ramp: null
 transformer: "TFR:IPPU:DEC_PFCS"

@@ -6,6 +6,6 @@ identifiers:
   transformation_name: "Scaled Default Max Parameters by 0.1 - AGRC: Improve rice\
     \ management"
 parameters:
-  magnitude: 0.045
+  magnitude: 0.045000000000000005
   vec_implementation_ramp: null
 transformer: "TFR:AGRC:DEC_CH4_RICE"

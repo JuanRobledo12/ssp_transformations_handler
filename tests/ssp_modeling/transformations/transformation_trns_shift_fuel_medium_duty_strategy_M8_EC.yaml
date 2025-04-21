@@ -13,6 +13,6 @@ parameters:
   fuels_source:
   - fuel_diesel
   - fuel_gasoline
-  magnitude: 0.07
+  magnitude: 0.06999999999999999
   vec_implementation_ramp: null
 transformer: "TFR:TRNS:SHIFT_FUEL_MEDIUM_DUTY"

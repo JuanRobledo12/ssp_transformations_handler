@@ -8,6 +8,6 @@ parameters:
   - aviation
   - road_heavy_freight
   dict_categories_target: null
-  magnitude: 0.02
+  magnitude: 0.020000000000000004
   vec_implementation_ramp: null
 transformer: "TFR:TRNS:SHIFT_MODE_FREIGHT"

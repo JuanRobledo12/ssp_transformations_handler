@@ -6,6 +6,6 @@ identifiers:
   transformation_code: "TX:LNDU:INC_SILVOPASTURE_STRATEGY_M8_EC"
   transformation_name: "Scaled Default Max Parameters by 0.1 - LNDU: Expand silvopasture"
 parameters:
-  magnitude: 0.01
+  magnitude: 0.010000000000000002
   vec_implementation_ramp: null
 transformer: "TFR:LNDU:INC_SILVOPASTURE"
