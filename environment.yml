@@ -7,6 +7,8 @@ dependencies:
   - xlsxwriter=3.1.1
   - ipykernel=6.29.5
   - pip
+  - build
+  - twine
   - pip:
       - git+https://github.com/jcsyme/sisepuede.git
 
